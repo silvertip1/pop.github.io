@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>积极语录弹框</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: "Microsoft YaHei", sans-serif;
+            overflow-x: hidden;
+        }
+
+        .popup {
+            position: fixed;
+            min-width: 200px;
+            max-width: 280px;
+            padding: 20px 24px;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            font-size: 15px;
+            line-height: 1.5;
+            color: #333;
+            z-index: 999;
+            animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            cursor: default;
+        }
+        .popup::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            border-radius: 16px 16px 0 0;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+        .popup .close {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
+            min-height: 36px;
+            border: none;
+            background: #eee;
+            border-radius: 50%;
+            font-size: 18px;
+            line-height: 1;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .popup .close:hover, .popup .close:active {
+            background: #ff6b6b;
+            color: #fff;
+        }
+        @keyframes popIn {
+            from {
+                opacity: 0;
+                transform: scale(0.5) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        .popup.fade-out {
+            animation: popOut 0.3s ease forwards;
+        }
+        @keyframes popOut {
+            to {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+        }
+        .copy-link-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 16px;
+            font-size: 13px;
+            color: #fff;
+            background: rgba(0,0,0,0.35);
+            border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 20px;
+            cursor: pointer;
+            z-index: 1000;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .copy-link-btn:hover { background: rgba(0,0,0,0.5); }
+        @media (max-width: 600px) { .copy-link-btn { display: none; } }
+    </style>
+</head>
+<body>
+    <button type="button" class="copy-link-btn" id="copy-link-btn">复制手机链接</button>
+    <script>
+        const messages = [
+            "每一天都是新的开始，加油！",
+            "你比想象中更强大。",
+            "小小的进步也是进步。",
+            "相信过程，结果会来的。",
+            "今天也要元气满满！",
+            "你已经做得很好了。",
+            "坚持就是胜利。",
+            "你的努力终将开花结果。",
+            "保持热爱，奔赴山海。",
+            "做自己的光，无需借谁的光。",
+            "今天的不开心就到此为止吧。",
+            "你值得世间所有美好。",
+            "慢慢来，比较快。",
+            "生活明朗，万物可爱。",
+            "愿你眼里有星辰大海。",
+            "心有所期，全力以赴。",
+            "你一定能成为想成为的人。",
+            "好事正在发生。",
+            "今天也要闪闪发光呀！",
+            "你是被偏爱的那一个。",
+            "前路漫漫亦灿灿。",
+            "愿你温柔且坚定。",
+            "一切都会好起来的。",
+            "你配得上更好的。",
+            "做喜欢的事，永远不晚。",
+            "每一步都算数，别怕慢。",
+            "未来的你，会感谢今天的坚持。",
+            "心中有光，脚下有路。",
+            "你当下的存在，已是美好。",
+            "累了就休息，但别轻易放弃。",
+            "给自己一点掌声，你走了很远的路。",
+            "希望是长着羽毛的鸟，栖息在灵魂里。",
+            "世界欠你的温柔，由你自己补上。",
+            "把今天过好，明天自有答案。",
+            "你温柔的坚持，终将所向披靡。",
+            "晨光熹微，是新的邀请函。",
+            "爱自己，是终身浪漫的起点。",
+            "万物皆有裂痕，那是光照进来的地方。",
+            "别赶路，去感受路。",
+            "你微笑的样子，胜过所有风景。",
+            "不是看到了希望才坚持，是坚持了才看到希望。",
+            "把平凡的日子，过成星辰大海。",
+            "你的故事，正要开始新的篇章。",
+            "别急，最好的总在不经意间出现。",
+            "你站在哪里，哪里就是风景。",
+        ];
+
+        function randomBetween(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function createPopup(text) {
+            const popup = document.createElement("div");
+            popup.className = "popup";
+            popup.innerHTML = `
+                <div class="text">${text}</div>
+            `;
+
+            const padding = 16;
+            const popupW = 280;
+            const popupH = 120;
+            const maxX = Math.max(0, window.innerWidth - popupW - padding);
+            const maxY = Math.max(0, window.innerHeight - popupH - padding - 80);
+            popup.style.left = randomBetween(padding, maxX) + "px";
+            popup.style.top = randomBetween(padding, maxY) + "px";
+
+            document.body.appendChild(popup);
+            return popup;
+        }
+
+        function removePopup(popup) {
+            popup.classList.add("fade-out");
+            setTimeout(() => popup.remove(), 300);
+        }
+
+        function autoPlayPopups() {
+            const shuffled = [...messages].sort(() => Math.random() - 0.5);
+            const interval = 500; // 每隔多少毫秒弹出一个（可改大一点更慢）
+            shuffled.forEach((msg, i) => {
+                setTimeout(() => createPopup(msg), i * interval);
+            });
+        }
+
+        // 页面加载后延迟 0.8 秒开始自动慢慢弹出
+        window.addEventListener("DOMContentLoaded", () => {
+            setTimeout(autoPlayPopups, 800);
+        });
+
+        // 复制手机链接（数据链接，发到手机在浏览器粘贴即可打开）
+        var copyBtn = document.getElementById("copy-link-btn");
+        if (copyBtn) copyBtn.addEventListener("click", () => {
+            const clone = document.documentElement.cloneNode(true);
+            clone.querySelectorAll(".popup").forEach(el => el.remove());
+            const btn = clone.querySelector("#copy-link-btn");
+            if (btn) btn.remove();
+            const html = "<!DOCTYPE html>\n" + clone.outerHTML;
+            const dataUrl = "data:text/html;charset=utf-8," + encodeURIComponent(html);
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(dataUrl).then(() => {
+                    alert("已复制！把链接发到手机（微信/QQ 发给自己），在手机浏览器地址栏粘贴打开即可。");
+                }).catch(() => fallbackCopy(dataUrl));
+            } else {
+                fallbackCopy(dataUrl);
+            }
+        });
+        function fallbackCopy(str) {
+            const ta = document.createElement("textarea");
+            ta.value = str;
+            ta.style.position = "fixed"; ta.style.opacity = "0";
+            document.body.appendChild(ta);
+            ta.select();
+            try {
+                document.execCommand("copy");
+                alert("已复制！把链接发到手机，在手机浏览器地址栏粘贴打开即可。");
+            } catch (e) {
+                alert("请手动复制：在浏览器地址栏全选后复制当前地址，发到手机在浏览器粘贴打开。");
+            }
+            document.body.removeChild(ta);
+        }
+    </script>
+</body>
+</html>
